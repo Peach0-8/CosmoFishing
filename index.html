@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ชิงหลิว บ่อตกปลา</title>
+<meta name="theme-color" content="#0d1418">
+<!-- ติดตั้งบนหน้าจอหลัก: เปิดจากไอคอนเพื่อเล่นเต็มจอในแนวนอน -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ชิงหลิว">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&family=Sarabun:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dao.css">
+<link rel="stylesheet" href="css/xemcau.css">
+<link rel="stylesheet" href="css/taikhoan.css">
+<link rel="stylesheet" href="css/online.css">
+<link rel="stylesheet" href="css/khoeca.css">
+<link rel="stylesheet" href="css/dandat.css">
+<link rel="stylesheet" href="css/thanhtich.css">
+<link rel="stylesheet" href="css/kyluc.css">
+<link rel="stylesheet" href="css/banbe.css">
+</head>
+<body>
+<div id="game">
+  <canvas id="cv3d"></canvas>
+  <canvas id="cv"></canvas>
+  <div id="lbl3d"></div>
+
+  <div id="hud-tl" class="hud">
+    <div class="row big"><span id="h-clock">05:30</span> <span id="h-day" class="dim">วันที่ 1</span></div>
+    <div class="row"><span id="h-weather">☀ แดดจัด</span> · <span id="h-wind">ลม</span></div>
+    <div class="row"><b id="h-ca">ยังไม่เริ่มรอบ</b></div>
+    <div class="row">กระชัง: <span id="h-keep">0 ตัว</span></div>
+    <div class="row"><span id="h-sync" class="dim">⚪ ยังไม่ซิงค์</span></div>
+    <div class="row money">💰 <span id="h-money">0</span> ฿</div>
+  </div>
+
+  <div id="hud-tr" class="hud">
+    <button data-panel="pond">🎣 เลือกบ่อ</button>
+    <button data-panel="quest">📋 ภารกิจ<span id="h-qbadge" class="qbadge hidden"></span></button>
+    <button data-panel="shop">🛒 ร้านค้า</button>
+    <button data-panel="skins">🎨 ตกแต่ง</button>
+    <button data-panel="keep">🧺 กระชัง</button>
+    <button data-panel="congdong">👥 ชุมชน</button>
+    <button data-panel="journal">📖 สมุดบันทึก</button>
+    <button data-panel="nhip">📈 อาการ<span class="hud-dai">ทุ่น</span></button>
+    <button data-panel="help">❔<span class="hud-dai"> คู่มือ</span></button>
+    <button id="btn-sound">🔊</button>
+    <button id="btn-fs" class="hidden" title="เต็มหน้าจอ: ซ่อนแถบเบราว์เซอร์เมื่อเล่นบนมือถือ"></button>
+  </div>
+
+  <div id="hud-bottom" class="hud">
+    <div class="gear">
+      <div><span class="dim">คัน</span> <b id="g-rod"></b> · <span class="dim">สาย</span> <b id="g-line"></b></div>
+      <div><span class="dim">เบ็ด</span> <b id="g-hook"></b> · <span class="dim">ทุ่น</span> <b id="g-float"></b></div>
+    </div>
+    <div class="rigread">
+      <div><b id="g-spot"></b> <b id="g-rig">ตั้ง – ตก –</b></div>
+      <div class="dim" id="g-depth"></div>
+      <div class="dim" id="g-bowls"></div>
+    </div>
+    <div class="adjust">
+      <button id="btn-map">🗺 แผนผังบ่อ (M)</button>
+      <button id="btn-setup">⚖ ตั้งทุ่น (C)</button>
+      <button id="btn-mix">🥣 ผสมเหยื่อ (B)</button>
+      <button id="btn-xa">🎯 อ่อยเหยื่อ (X)</button>
+      <button id="btn-learn">👁 ดูใต้น้ำ (V)</button>
+      <button id="btn-view">🎥 มุมกล้อง (G)</button>
+      <button id="btn-watch">👀 ดูเพื่อนข้างบ่อ (N)</button>
+    </div>
+  </div>
+
+  <!-- แถบอัดปลา (ui.js UI.fightHud): สถานะปลา สัญญาณเตือนล่วงหน้า แรงดึง / แรงรับสายหน้า แรงปลา คำแนะนำ -->
+  <div id="fightbar" class="hud hidden">
+    <div class="fb-top"><span id="fb-phase"></span><span id="fb-warn"></span></div>
+    <div class="fb-track"><div id="fb-fill"></div><div id="fb-mark" title="แรงรับสายหน้า"></div></div>
+    <div class="fb-fuse" title="สายหน้าใกล้ขาด"><i id="fb-over"></i></div>
+    <div class="fb-row"><span class="dim">แรงปลา</span><div class="fb-stam"><i id="fb-stam"></i></div><span class="dim" id="fb-num"></span></div>
+    <div class="fb-hint" id="fb-hint"></div>
+  </div>
+
+  <div id="actions" class="hud">
+    <button id="a-net" class="hidden good">🥅 ช้อนปลา (E)</button>
+  </div>
+
+  <div id="status" class="hud"></div>
+  <div id="rotate-hint" class="hud">📱 หมุนโทรศัพท์เป็นแนวนอนเพื่อการตกปลาที่สะดวกขึ้น</div>
+  <div id="toasts"></div>
+
+  <div id="overlay" class="hidden">
+    <div id="panel">
+      <button id="panel-close" aria-label="ปิด">✕</button>
+      <div id="panel-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Form ẩn cho Netlify Forms: lúc deploy Netlify đọc form này để nhận góp ý (js/gopy.js gửi bằng fetch). Tên các ô phải khớp gopy.js. -->
+<!-- Netlify: dự án → Forms → "Enable form detection" (bật một lần, rồi deploy lại). Góp ý hiện ở mục Forms → gopy. -->
+<form hidden method='post' name='gopy'><input type='hidden' name='form-name' value='gopy' />
+  <input name="bot-field"><input name="loai"><input name="sao"><textarea name="noidung"></textarea>
+  <input name="ten"><input name="thongtin"><input name="luc">
+</form>
+
+<script src="js/data.js"></script>
+<script src="js/world.js"></script>
+<script src="js/ponds.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/fish.js"></script>
+<script src="js/bait.js"></script>
+<script src="js/float.js"></script>
+<script src="js/pondmap.js"></script>
+<script src="js/pond.js"></script>
+<script src="js/fight.js"></script>
+<script src="js/render.js"></script>
+<script src="js/rigdraw.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/panels2.js"></script>
+<script src="js/nhipphao.js"></script>
+<script src="js/skins.js"></script>
+<script src="js/quests.js"></script>
+<script src="js/moi.js"></script>
+<script src="js/gopy.js"></script>
+<script src="js/dao.js"></script>
+<script src="js/xemcau.js"></script>
+<script src="js/game.js"></script>
+<script src="js/syncmodel.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/taikhoan.js"></script>
+<script src="js/online-may-chu.js"></script>
+<script src="js/online.js"></script>
+<script src="js/nhatky.js"></script>
+<script src="js/khoeca.js"></script>
+<script src="js/xahoi.js"></script>
+<script src="js/congdong.js"></script>
+<script src="js/thanhtich.js"></script>
+<script src="js/kyluc.js"></script>
+<script src="js/banbe.js"></script>
+<script src="js/hoi.js"></script>
+<script src="js/quantri.js"></script>
+<script src="js/diemdanh.js"></script>
+<script src="js/dandat.js"></script>
+<!-- Chơi online: online-may-chu.js đặt CC.ONLINE_URL (địa chỉ máy chủ phòng chơi Cloudflare), online.js là phần trong game -->
+<!-- Thêm sau cùng để bọc được mọi thứ ở trên: nhật ký câu, thẻ khoe cá, ván đầu dẫn người mới -->
+<!-- Đợt 2 (hợp đồng online/API-XA-HOI.md): xahoi.js gọi máy chủ; thành tích + danh hiệu, kỷ lục + giải theo giờ, bạn bè, hội câu, báo cáo + quản trị -->
+<!-- Điểm danh hằng ngày (ngày thật, giờ Việt Nam): +50k mỗi ngày, thưởng chuỗi 7 / 14 / 21 / 30 ngày -->
+<!-- dandat.js để cuối cùng -->
+</body>
+</html>
